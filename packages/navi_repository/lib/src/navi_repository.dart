@@ -6,13 +6,13 @@ import 'package:navi_api/navi_api.dart';
 import 'package:image_api/image_api.dart';
 import 'package:navi_repository/src/models/models.dart';
 
-
 class NaviRepository {
   late NaviAPIClient naviAPIClient;
   late ImageApiClient imageApiClient;
 
   NaviRepository() {
-    String baseUrl = "http://10.0.2.2:5050";
+    // String baseUrl = "http://10.0.2.2:5050";
+    String baseUrl = "https://navit-backend.vercel.app";
     naviAPIClient = NaviAPIClient(baseUrl: baseUrl);
     imageApiClient = ImageApiClient(baseUrl: "$baseUrl/images");
   }
@@ -23,7 +23,7 @@ class NaviRepository {
       List<Building> output = [];
       for (var building in buildings) {
         ImageModel image = await imageApiClient.getWithId(id: building.imageId);
-
+        print(image.name);
         XFile imageFile = XFile.fromData(base64.decode(image.image),
             name: image.name, mimeType: image.mime_type);
         output.add(Building(
@@ -60,6 +60,21 @@ class NaviRepository {
           imageFile: imageFile, name: building.name, id: building.id);
     } catch (e) {
       print("Error In getBuilding: $e");
+      rethrow;
+    }
+  }
+
+  Future<Floor> getFloor({required String id}) async {
+    try {
+      final floor = await naviAPIClient.getFloor(id: id);
+      Floor out = Floor(
+          buildingId: floor.buildingId,
+          level: floor.level,
+          id: floor.floorId,
+          imageId: floor.imageId);
+      return out;
+    } catch (e) {
+      print("Error In getFloor: $e");
       rethrow;
     }
   }
@@ -135,6 +150,26 @@ class NaviRepository {
     }
   }
 
+  Future<List<Node>> searchNodes({required String query}) async {
+    try {
+      final nodes = await naviAPIClient.searchNodes(query: query);
+
+      return nodes
+          .map((e) => Node(
+              ssid: e.ssid,
+              id: e.id,
+              x: e.x,
+              desc: e.desc,
+              floorId: e.floorId,
+              label: e.label,
+              type: e.type,
+              y: e.y))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> addFloor({required Floor floor}) async {
     try {
       String imageAsString =
@@ -166,7 +201,11 @@ class NaviRepository {
       final nodes = await naviAPIClient.getAllLinks(floorId: floorId);
 
       return nodes
-          .map((e) => Link(id: e.id, floorId: e.floorId, link1Id: e.linkId1, link2Id: e.linkId2))
+          .map((e) => Link(
+              id: e.id,
+              floorId: e.floorId,
+              link1Id: e.linkId1,
+              link2Id: e.linkId2))
           .toList();
     } catch (e) {
       rethrow;

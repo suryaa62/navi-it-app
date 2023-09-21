@@ -1,7 +1,3 @@
-
-
-
-
 import 'models/models.dart';
 import 'package:dio/dio.dart';
 
@@ -40,6 +36,23 @@ class NaviAPIClient {
       }
     } catch (e) {
       print("Error In getBuilding: $e");
+      rethrow;
+    }
+  }
+
+  Future<Floor> getFloor({required String id}) async {
+    try {
+      Response response = await _dio.get("/floors/id", data: {"id": id});
+
+      if (response.statusCode == 200) {
+        // print(response.data.toString());
+        Floor floor = Floor.fromJson(response.data);
+        return floor;
+      } else {
+        throw Exception("Error: ${response.data}");
+      }
+    } catch (e) {
+      print("Error In getFloor: $e");
       rethrow;
     }
   }
@@ -119,6 +132,23 @@ class NaviAPIClient {
     try {
       Response response =
           await _dio.get("/nodes/floor", data: {"floorId": floorId});
+
+      if (response.statusCode == 200) {
+        List<Node> nodes =
+            (response.data).map<Node>((i) => Node.fromJson(i)).toList();
+        return nodes;
+      }
+
+      return [];
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<Node>> searchNodes({required String query}) async {
+    try {
+      Response response =
+          await _dio.get("/nodes/search", data: {"query": query});
 
       if (response.statusCode == 200) {
         List<Node> nodes =
